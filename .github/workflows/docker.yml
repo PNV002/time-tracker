@@ -1,0 +1,53 @@
+name: Docker Build and Run
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:  
+
+env:
+  IMAGE_NAME: my-app
+  IMAGE_TAG: 1.0
+
+jobs:
+  build-and-run:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Prepare App
+        run: |
+          echo 'print("Hello from Docker image")' > app.py
+          cat <<EOF > Dockerfile
+          FROM python:3.11-slim
+          WORKDIR /app
+          COPY . /app
+          CMD ["python", "app.py"]
+          EOF
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+
+      - name: Build Docker Image
+        run: docker build -t ${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }} .
+
+      - name: Run Docker Container
+        run: |
+          echo "=== Running container ==="
+          docker run --rm ${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
+
+      - name: Pipeline Success Message
+        if: success()
+        run: echo "Success"
+
+      - name: Pipeline Failure Message
+        if: failure()
+        run: echo "Fail"
+
+      - name: Always Message
+        if: always()
+        run: echo "Pipeline executed"
