@@ -2,7 +2,7 @@ name: Backup Repository
 
 on:
   schedule:
-    - cron: "*/2 * * * *"   
+    - cron: "* * * * *"   
 
 jobs:
   backup:
