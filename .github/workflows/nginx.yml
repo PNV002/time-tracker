@@ -1,0 +1,29 @@
+name: Install NGINX
+
+on:
+  workflow_dispatch:   
+
+jobs:
+  setup-nginx:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Update apt and install NGINX
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y nginx
+
+      - name: Start NGINX service
+        run: |
+          sudo systemctl start nginx
+          sudo systemctl enable nginx
+          sudo systemctl status nginx --no-pager
+
+      - name: Cleanup Workspace
+        if: always()
+        run: |
+          echo "Pipeline finished. Cleaning up..."
+          rm -rf *
