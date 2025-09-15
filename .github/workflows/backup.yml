@@ -1,0 +1,26 @@
+name: Backup Repository
+
+on:
+  schedule:
+    - cron: "*/2 * * * *"   
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   
+
+      - name: Create backup archive
+        run: |
+          mkdir -p backup
+          tar -czf backup/${{ github.repository }}-$(date +%F-%H%M).tar.gz .
+
+      - name: Upload backup artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: repo-backup
+          path: backup/*.tar.gz
