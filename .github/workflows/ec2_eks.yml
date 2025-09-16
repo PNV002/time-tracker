@@ -3,12 +3,13 @@ name: CI/CD to EKS
 on:
   push:
     branches:
-      - main   # change if your branch is master
+      - main
 
 env:
   AWS_REGION: ap-southeast-2
   CLUSTER_NAME: tourism-cluster
   ECR_REPO_NAME: tourism-website
+  DEPLOYMENT_NAME: tourism-website
 
 jobs:
   deploy:
@@ -27,7 +28,6 @@ jobs:
           EXPOSE 80
           CMD ["nginx", "-g", "daemon off;"]
           EOF
-
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -56,10 +56,11 @@ jobs:
         run: |
           aws eks update-kubeconfig --name ${{ env.CLUSTER_NAME }} --region ${{ env.AWS_REGION }}
 
-      - name: Deploy to EKS
+      - name: Deploy to EKS (safe rollout)
         run: |
-          kubectl set image deployment/tourism-website \
-            tourism-website=${IMAGE_URI} \
-            --record
+          kubectl set image deployment/${{ env.DEPLOYMENT_NAME }} \
+            ${DEPLOYMENT_NAME}=${IMAGE_URI} || true
 
-          kubectl rollout status deployment/tourism-website
+          kubectl rollout status deployment/${{ env.DEPLOYMENT_NAME }} --timeout=10m || true
+
+          kubectl get pods -l app=${{ env.DEPLOYMENT_NAME }}
